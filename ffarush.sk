@@ -1,0 +1,344 @@
+Options:
+	Nom: RushFFA by [/UnTroll3d]#0516
+	Permission: &cCommande inconnue.
+	perm: &cCommande inconnue.
+	heart: ♥
+	Monde: world
+	BlocFFA: sandstone:2 
+	CoucheMax: 35
+	CoucheMin: 13
+	
+Variables:
+	{brainffaspawn.%player%} = true
+	{brainffa.%player%} = false
+
+on join:
+	if {kill.%player%} is not set:
+		set {kill.%player%} to 0
+	if {mort.%player%} is not set:
+		set {mort.%player%} to 0
+	if {ks.%player%} is not set:
+		set {ks.%player%} to 0
+	if {point.%player%} is not set:
+		set {point.%player%} to 0
+	set {EnJeux.%player%} to false
+		
+function ScoreBrain(p: player):
+	wipe {_p}'s sidebar
+	set name of sidebar of {_p} to "&6&lRushFFA"
+	set score "&7&m--------&7&m---------" in sidebar of {_p} to 11
+	set score " &c&l " in sidebar of {_p} to 10
+	set score "&7Kills: &e%{kill.%{_p}%}%" in sidebar of {_p} to 9
+	set score "&7Morts: &b%{mort.%{_p}%}%" in sidebar of {_p} to 8
+	set score "&7Kill-Streak: &a%{ks.%{_p}%}%/15" in sidebar of {_p} to 7
+	set score " &4&l " in sidebar of {_p} to 6
+	set score "&7Points: &3%{point.%{_p}%}%" in sidebar of {_p} to 5
+	set score "&7Alliance: &c&l✘" in sidebar of {_p} to 4
+	set score " &e&l " in sidebar of {_p} to 3
+	set score "&7&m-----------------" in sidebar of {_p} to 2
+	set score "   &6play.serveur.fr" in sidebar of {_p} to 0
+	stop 
+
+function ReineRushJoin(p: player):
+	teleport {_p} at {lobbybrain}
+	set {toucher.player.%{_p}%} to false
+	if {mod.utilisation.%{_p}%} is true:
+		stop
+	else:
+		heal {_p}
+		set {_p}'s game mode to survival
+		clear {_p}'s inventory
+		wait 1 tick
+		set slot 6 of {_p} to a repeater named "&bEditeur de kit &7(Clique droit)"
+		set slot 4 of {_p} to golden axe of Unbreaking 250 named "&bJouer &7(Clique droit)"
+		set slot 2 of {_p} to a book named "&bMode Spectateur &7(Clique droit)"
+		set {_p}'s flight mode to false
+		stop
+
+function reset(p: player):
+	loop all blocks in radius 80 around location(0, 0, 0, world("world")):
+		loop-block is sandstone:2
+		set loop-block to air
+
+function kit(p: player):
+	if {modifkit.%{_p}%} is not set:
+		set slot 0 of {_p} to diamond sword with nbt "{ench:[{id:16,lvl:1}],Unbreakable:10}"
+		set slot 1 of {_p} to iron pickaxe with nbt "{ench:[{id:32,lvl:2}],Unbreakable:10}"
+		set slot 2 of {_p} to 64 sandstone:2
+		set slot 3 of {_p} to 64 sandstone:2
+		set slot 4 of {_p} to 4 golden apple
+		set slot 5 of {_p} to 64 sandstone:2
+		set slot 6 of {_p} to 64 sandstone:2
+		set slot 7 of {_p} to 64 sandstone:2
+		set slot 8 of {_p} to 64 sandstone:2
+	else:
+		set {_p}'s inventory's serialized contents to {kit.user.modif.%{_p}%}
+
+function editkit(p: player):
+	if {EnJeux.%{_p}%} is false:
+		set {save.%{_p}%} to true
+		send "&7Une fois votre kit modifié, faites &3/save &7pour le sauvegarder." to {_p}
+		set slot 0 of {_p} to diamond sword with nbt "{ench:[{id:16,lvl:1}],Unbreakable:10}"
+		set slot 1 of {_p} to iron pickaxe with nbt "{ench:[{id:32,lvl:2}],Unbreakable:10}"
+		set slot 2 of {_p} to 64 sandstone:2
+		set slot 3 of {_p} to 64 sandstone:2
+		set slot 4 of {_p} to 4 golden apple
+		set slot 5 of {_p} to 64 sandstone:2
+		set slot 6 of {_p} to 64 sandstone:2
+		set slot 7 of {_p} to 64 sandstone:2
+		set slot 8 of {_p} to 64 sandstone:2
+	else:
+		send "&cVous ne devez pas êtres en jeux pour modifier votre kit." to {_p}
+
+command /save:
+	trigger:
+		if {save.%player%} is false:
+			send "&cVous devez être en mode Editeur."
+		else:
+			set {save.%player%} to false
+			set {kit.user.modif.%player%} to serialized contents of player's inventory 
+			set {modifkit.%player%} to true
+			ReineRushJoin(player)
+
+on join:
+	ReineRushJoin(player)
+	ScoreBrain(player)
+	set join message to ""
+	set {ks.%player%} to 0
+	set {EnJeux.%player%} to false
+
+on join:
+	if {BootstReineRushOk} is true:
+		loop all players:
+			set action bar of loop-player to "&3&lServeur Boosté par &c&l%{player.booster.reinerush}% &f- &b&lCoins x2"
+
+On rightclick with a golden axe : 
+	if name of player's tool is "&bJouer &7(Clique droit)":
+		cancel event
+		set {_rdmbrainffa} to random integer between 1 and 8
+		teleport player to a random location out of {brainffa1}, {brainffa2}, {brainffa3} and {brainffa4}
+		set player's game mode to survival
+		clear player's inventory
+		set {EnJeux.%player%} to true
+		set {brainffaspawn.%player%} to false
+		apply resistance 5 to the player for 5 seconds
+		wait 1 tick
+		clear player's inventory
+		kit(player)
+		equip player with golden helmet with nbt "{ench:[{id:0,lvl:1}],Unbreakable:10}"
+		equip player with leather chestplate with nbt "{ench:[{id:0,lvl:2}],Unbreakable:10}"
+		equip player with chain leggings with nbt "{ench:[{id:0,lvl:1}],Unbreakable:10}"
+		equip player with iron boots with nbt "{ench:[{id:0,lvl:1}],Unbreakable:10}"
+
+On rightclick with a book:
+	if name of player's tool is "&bMode Spectateur &7(Clique droit)":
+		set player's game mode to spectator
+		set {specmode.%player%} to true
+		teleport player to {spectateur}
+		send "&7Faites &3/spawn &7pour quitter le mode spectateur."
+
+On rightclick with a repeater:
+	editkit(player)
+
+On rightclick with a ender chest : 
+	cancel event
+
+command /spawn:
+	trigger:
+		if {specmode.%player%} is true:
+			ReineRushJoin(player)
+			ScoreBrain(player)
+			set {specmode.%player%} to false
+		else:
+			send "&cCette commande est réserver au mode spectateur." to player
+
+command /set [<text>] [<text>]:
+	permission: setspawn.bf
+	permission message: {@perm}
+	trigger:
+		if arg 1 is "setspawn":
+			if player has permission "brainffa.setspawn":
+				if arg 2 is not set:
+					send "&aLe Spawn du &b&lFFA-Brain &aa été placé avec succès."
+					set {lobbybrain} to location of player
+				if arg 2 is "1":
+					set {brainffa1} to location of player
+					send "&aL'apparition n°1 a été placé avec succès."
+				if arg 2 is "2":
+					set {brainffa2} to location of player
+					send "&aL'apparition n°2 a été placé avec succès."
+				if arg 2 is "3":
+					set {brainffa3} to location of player
+					send "&aL'apparition n°3 a été placé avec succès."
+				if arg 2 is "4":
+					set {brainffa4} to location of player
+					send "&aL'apparition n°4 a été placé avec succès."
+				if arg 2 is "spectateur":
+					set {spectateur} to location of player
+					send "&aL'apparition du spectateur a été placé avec succès."
+			else:
+				send "{@Permission}"
+	
+on damage:
+	if attacker is a player:
+		if victim is a player:
+			if attacker is not victim:
+				set {attackerbrainffa.%victim%} to "%attacker%"
+		
+on hunger meter change:
+	if {brainffa.%player%} is true:
+		cancel event
+		
+on drop:
+	if {brainffa.%player%} is true:
+		cancel event
+	
+on inventory click:
+	if {save.%player%} is false:
+		cancel event
+
+on break:
+	if block is {@BlocFFA}:
+		if {Nomodif.%player%} is set:
+			stop
+		if {Reset} is set:
+			cancel event
+			stop
+		if {blockis.%location of event-block%} is set:
+			stop
+		else:
+			set {blocklocation.%{count}%} to event-location
+			set {block.%{count}%} to type of event-block
+			set {blockis.%location of event-block%} to true
+			add 1 to {Count}		
+	else:
+		cancel event
+
+on place:
+	If y-coord of location of block is bigger than {@CoucheMax}:
+		cancel event
+		stop
+	If y-coord of location of block is smaller than {@CoucheMin}:
+		cancel event
+		stop
+	else:
+		wait 1 tick
+		give 1 {@BlocFFA} to player
+		stop
+
+on hunger meter change:
+	cancel event
+
+on drop:
+	cancel event
+
+on mine of {@BlocFFA}:
+	cancel event
+	set event-block to air
+	
+on mine of yellow hardened clay:
+	cancel event
+	set event-block to air
+	
+on mine of orange hardened clay:
+	cancel event
+	set event-block to air
+
+on mine of red hardened clay:
+	cancel event
+	set event-block to air
+
+on quit:
+	set {ks.%player%} to 0
+	set quit message to ""
+	set {EnJeux.%player%} to false
+
+on death of player:
+    set death message to ""
+    clear drops
+
+on damage:
+	if damage cause is attack:
+		set {toucher.player.%victim%} to true
+
+on damage:
+	if {EnJeux.%victim%} is false:
+		cancel event
+
+on death of player:
+	wait a tick
+	if {toucher.player.%victim%} is true:
+		if {rename.epe.ok.%attacker%} is true:
+			send "&3%victim% &7a été tué par &3%attacker% &7avec %{rename.epe.%attacker%}%" to attacker
+			send "&3%victim% &7a été tué par &3%attacker% &7avec %{rename.epe.%attacker%}%" to victim
+		else if {rename.epe.ok.%attacker%} is false:
+			send "&3%victim% &7a été tué par &3%attacker%" to attacker
+			send "&3%victim% &7a été tué par &3%attacker%" to victim
+		else:
+			send "&3%victim% &7a été tué par &3%attacker%" to attacker
+			send "&3%victim% &7a été tué par &3%attacker%" to victim
+		add 1 to {kill.%attacker%}
+		add 1 to {ks.%attacker%}
+		if {BootstReineRushOk} is true:
+			add 3 to {moneyyy.%attacker%}
+			set action bar of attacker to "&3&lServeur Boosté par &c&l%{player.booster.reinerush}% &f- &b&lCoins x2"	
+			set action bar of victim to "&3&lServeur Boosté par &c&l%{player.booster.reinerush}% &f- &b&lCoins x2"	
+		else:
+			add 3 to {moneyyy.%attacker%}
+		wait a tick
+		heal attacker
+		force respawn victim
+		ReineRushJoin(victim)
+		ScoreBrain(attacker)
+		ScoreBrain(victim)
+		set {brainffa.%victim%} to false
+		set {brainffaspawn.%victim%} to true
+		set {toucher.player.%victim%} to false
+		set {EnJeux.%victim%} to false
+		add 1 to {mort.%victim%}
+		stop
+	else:
+		send "&3%victim% &7est mort" to victim
+		wait a tick
+		force respawn victim
+		ReineRushJoin(victim)
+		ScoreBrain(victim)
+		set {brainffa.%victim%} to false
+		set {brainffaspawn.%victim%} to true
+		set {toucher.player.%victim%} to false
+		set {EnJeux.%victim%} to false
+		if {BootstReineRushOk} is true:
+			set action bar of victim to "&3&lServeur Boosté par &c&l%{player.booster.reinerush}% &f- &b&lCoins x2"	
+		add 1 to {mort.%victim%}
+		stop
+
+on death of player:
+	wait a tick
+	if attacker is a player:
+		if victim is a player:
+			if attacker is not victim:
+				if {ks.%attacker%} > 13:
+					broadcast "&a&l%attacker% &7a gagné la partie !"
+					add 1 to {point.%attacker%}
+					reset(player)
+					wait a tick
+					add 75 to {moneyyy.%attacker%}
+					loop all players:
+						if {EnJeux.%loop-player%} is true:
+							ReineRushJoin(loop-players)
+						set {ks.%loop-player%} to 0
+						ScoreBrain(loop-players)
+
+command /reset:
+	permission: admin.reset
+	permission message : @perm
+	trigger:
+		reset(player)
+
+on damage:
+	if damage was caused by void:
+		cancel event
+		kill victim
+		stop
+	if damage cause is fall:
+		cancel event
